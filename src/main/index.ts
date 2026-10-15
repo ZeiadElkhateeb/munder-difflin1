@@ -1,3 +1,5 @@
+// First: picks the userData profile before any module below reads it.
+import './devProfile';
 import { registerWindowIpc } from './windows';
 import { registerAgentSpawnIpc } from './agentSpawn';
 import { registerAppIpc } from './ipc/appIpc';
