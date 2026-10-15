@@ -41,4 +41,13 @@ function readMainSource() {
     .join('\n');
 }
 
-module.exports = { readMainSource, MAIN_WIRING_FILES };
+/** The renderer's useHive hook, split the same way: useHive.ts composes the effect
+ *  hooks in src/renderer/src/hooks/hive/. Returned as one LF-normalized string. */
+function readUseHiveSource() {
+  const hooks = path.join(__dirname, '..', 'src', 'renderer', 'src', 'hooks');
+  const files = [path.join(hooks, 'useHive.ts'),
+    ...fs.readdirSync(path.join(hooks, 'hive')).filter((f) => f.endsWith('.ts')).sort().map((f) => path.join(hooks, 'hive', f))];
+  return files.map((f) => fs.readFileSync(f, 'utf8').replace(/\r\n/g, '\n')).join('\n');
+}
+
+module.exports = { readMainSource, readUseHiveSource, MAIN_WIRING_FILES };

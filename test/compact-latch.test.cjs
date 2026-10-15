@@ -70,9 +70,8 @@ test('(b) a successful delivery reports true and acknowledges once', () => {
 // its wiring is asserted against the source text — the house pattern. Removing
 // either guard fails a test here, which is what the card asks for.
 
-const hive = fs.readFileSync(
-  path.resolve(__dirname, '..', 'src/renderer/src/hooks/useHive.ts'), 'utf8'
-);
+const { readUseHiveSource } = require('./main-source.cjs');
+const hive = readUseHiveSource();
 
 test('(a) fire() refuses an undeliverable agent BEFORE it enqueues', () => {
   assert.match(hive, /if \(!canDeliverToAgent\(a\.status, ptyQuietMs\(a\.ptyId, now\), QUIESCE_IDLE_MS\)\) continue;/);

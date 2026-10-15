@@ -9,7 +9,7 @@
  */
 
 const test = require('node:test');
-const { readMainSource } = require('./main-source.cjs');
+const { readMainSource, readUseHiveSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -93,9 +93,8 @@ test('renderer task actions never send a whole stale ledger back to main', () =>
   const sources = [
     'src/renderer/src/components/AskMeTab.tsx',
     'src/renderer/src/components/TaskDetailOverlay.tsx',
-    'src/renderer/src/components/TasksKanban.tsx',
-    'src/renderer/src/hooks/useHive.ts'
-  ].map((file) => fs.readFileSync(path.join(root, file), 'utf8'));
+    'src/renderer/src/components/TasksKanban.tsx'
+  ].map((file) => fs.readFileSync(path.join(root, file), 'utf8')).concat(readUseHiveSource());
 
   for (const source of sources) {
     assert.doesNotMatch(source, /hiveWriteTasks\s*\(/,
