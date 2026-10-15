@@ -2,7 +2,7 @@
  * Config IPC: read/update harness config (bootstraps hive services on the first
  * harnessHome), token caps, and harness-home validation.
  */
-import { ipcMain } from 'electron';
+import { ipcMain } from './typedIpc';
 import { readConfig, writeConfig, setAgentTokenCap, ensureHarnessHome, type HarnessConfig } from '../config';
 import { analytics } from '../analytics';
 import { bootstrapHiveServices } from '../lifecycle';

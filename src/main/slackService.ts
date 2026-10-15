@@ -2,7 +2,8 @@
  * Slack: the inbound webhook server (Slack message → Michael's queue), file downloads,
  * the reply server, the done-notifier that posts one summary per finished thread, and slack:* IPC.
  */
-import { app, ipcMain } from 'electron';
+import { app } from 'electron';
+import { ipcMain } from './ipc/typedIpc';
 import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdirSync, createWriteStream } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { join, resolve, basename } from 'node:path';

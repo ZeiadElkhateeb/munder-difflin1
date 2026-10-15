@@ -2,7 +2,8 @@
  * App-level IPC: clipboard, dialogs, attachments, external links, login item,
  * notifications, analytics, app info and voice transcription (freeflow).
  */
-import { app, BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, shell } from 'electron';
+import { ipcMain } from './typedIpc';
 import { spawn } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, resolve, basename } from 'node:path';

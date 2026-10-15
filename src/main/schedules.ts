@@ -2,7 +2,7 @@
  * Timed work: recurring missions (auto-dispatch, heartbeat), context triggers
  * (auto-compact / auto-clear cadences), and their IPC.
  */
-import { ipcMain } from 'electron';
+import { ipcMain } from './ipc/typedIpc';
 import { readConfig, writeConfig, OPS_STANDUP_MISSION, HEARTBEAT_MISSION, COMPACT_MAINTENANCE_MISSION, type ScheduledMission } from './config';
 import { normalizeWeekly, weeklyDelayMs } from '../shared/weeklySchedule';
 import { DEFAULT_CONTEXT_TRIGGER, type ContextRule, type ContextTriggerConfig } from '../shared/triggers';

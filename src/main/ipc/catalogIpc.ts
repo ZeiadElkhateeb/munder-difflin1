@@ -2,7 +2,8 @@
  * Catalog IPC: the Settings hero payload, model catalog, skills (local + catalog) and
  * the external tool status list.
  */
-import { app, ipcMain, shell } from 'electron';
+import { app, shell } from 'electron';
+import { ipcMain } from './typedIpc';
 import { existsSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { homedir } from 'node:os';

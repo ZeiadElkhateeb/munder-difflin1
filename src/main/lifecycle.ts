@@ -2,7 +2,8 @@
  * App lifecycle: bootstrapping hive services, quit / closing time / reset / change-home
  * teardown. Every path that moves or wipes the hive flushes hive commits first.
  */
-import { app, ipcMain } from 'electron';
+import { app } from 'electron';
+import { ipcMain } from './ipc/typedIpc';
 import { rmSync, existsSync, cpSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { abortPendingRestart } from './updater';

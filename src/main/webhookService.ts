@@ -2,7 +2,7 @@
  * Generic inbound webhooks: multi-endpoint server, held-token approvals, dispatch into
  * the task ledger, the outbound done-observer, trigger history, and their IPC.
  */
-import { ipcMain } from 'electron';
+import { ipcMain } from './ipc/typedIpc';
 import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { readConfig, writeConfig, type HarnessConfig } from './config';
 import type { HiveTask } from './hive';

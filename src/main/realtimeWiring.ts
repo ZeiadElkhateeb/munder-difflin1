@@ -2,7 +2,8 @@
  * Realtime Michael (voice): wires the realtime IPC, the voice action adapters, the
  * completion watcher and the floor-delta watcher to the hive.
  */
-import { ipcMain, Notification } from 'electron';
+import { Notification } from 'electron';
+import { ipcMain } from './ipc/typedIpc';
 import { RealtimeFloorWatcher } from './realtimeFloorWatcher';
 import { readConfig, writeConfig, type HarnessConfig } from './config';
 import type { HiveTask } from './hive';

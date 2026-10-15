@@ -2,7 +2,8 @@
  * Hive IPC: registry, board, tasks, messages, memory and knowledge graph, command
  * history, usage/telemetry, operator control, text search and GitHub ingestion.
  */
-import { BrowserWindow, dialog, ipcMain } from 'electron';
+import { BrowserWindow, dialog } from 'electron';
+import { ipcMain } from './typedIpc';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { readConfig, writeConfig } from '../config';

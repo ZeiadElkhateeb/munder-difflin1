@@ -3,7 +3,7 @@
  * <hive>/spawn-requests, worker lifecycle and token caps, preserved worktrees and their
  * GC, and the workers:* IPC surface.
  */
-import { ipcMain } from 'electron';
+import { ipcMain } from './ipc/typedIpc';
 import { rmSync, existsSync, readFileSync, readdirSync, statSync, unlinkSync, mkdirSync, renameSync } from 'node:fs';
 import { join, resolve, basename, isAbsolute } from 'node:path';
 import { isSafeCommandName } from './shellEnv';

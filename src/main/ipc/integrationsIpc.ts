@@ -2,7 +2,7 @@
  * Integrations IPC: the registry, write-only secrets, per-provider BYOK keys, and
  * connection tests. Secrets never travel back over IPC.
  */
-import { ipcMain } from 'electron';
+import { ipcMain } from './typedIpc';
 import * as integrations from '../integrations';
 import { validateBaseUrl, buildAuthHeaders, resolveUpstreamUrl, secretRefFor, INTEGRATION_TEMPLATES } from '../../shared/integrations';
 import { BACKEND_KEY_ENV, providerKeyRef } from '../agentSpawn';

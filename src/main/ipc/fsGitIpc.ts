@@ -1,7 +1,8 @@
 /**
  * Sandboxed filesystem and git IPC for the Files / Git / IDE views.
  */
-import { ipcMain, shell } from 'electron';
+import { shell } from 'electron';
+import { ipcMain } from './typedIpc';
 import { listDir, readFileText, readFileBinary, writeFileText, statAbs } from '../fs';
 import { getBranch, getStatus, getLog, getBranches, getAheadBehind, isRepo, getDiff, mainRepoRoot, getLogGraph, getCommitFiles, getFileAtRev, compareRefs, listWorktrees, checkoutRef } from '../git';
 import { ptyManager } from '../services';

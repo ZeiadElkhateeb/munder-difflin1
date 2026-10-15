@@ -14,7 +14,7 @@
  *
  * Branch feat/realtime-michael. See board.md "🎙 REALTIME MICHAEL".
  */
-import { ipcMain } from 'electron';
+import { ipcMain } from './ipc/typedIpc';
 import { getSecret, hasSecret } from './integrations';
 
 /** Mirrors `providerKeyRef('openai')` in src/main/index.ts (BACKEND_KEY_ENV maps

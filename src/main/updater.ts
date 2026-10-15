@@ -1,4 +1,5 @@
-import { app, ipcMain, shell } from 'electron';
+import { app, shell } from 'electron';
+import { ipcMain } from './ipc/typedIpc';
 import type { WebContents } from 'electron';
 import { request as httpsRequest } from 'node:https';
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';

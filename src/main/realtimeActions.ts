@@ -34,7 +34,7 @@
  * control.pause+steer+halt / pty kill / missions save), injected via deps so this
  * module stays decoupled from index.ts wiring.
  */
-import { ipcMain } from 'electron';
+import { ipcMain } from './ipc/typedIpc';
 import type { HiveMessage, HiveTask, Registry } from './hive';
 import type { ScheduledMission } from './config';
 import { inferAgentProvider } from '../shared/agentProvider';

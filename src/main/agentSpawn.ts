@@ -3,7 +3,8 @@
  * worktrees, missing-CLI install + relaunch), tearing it down (`teardownPty`), the PTY
  * exit handler, keep-awake, and the pty:* IPC surface.
  */
-import { BrowserWindow, ipcMain, powerSaveBlocker } from 'electron';
+import { BrowserWindow, powerSaveBlocker } from 'electron';
+import { ipcMain } from './ipc/typedIpc';
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, mkdirSync, lstatSync, readlinkSync, symlinkSync } from 'node:fs';
 import { join, resolve, sep, dirname } from 'node:path';

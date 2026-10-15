@@ -1,4 +1,5 @@
-import { contextBridge, ipcRenderer, webUtils, type IpcRendererEvent } from 'electron';
+import { contextBridge, ipcRenderer as electronIpcRenderer, webUtils, type IpcRendererEvent } from 'electron';
+import type { EventChannel, InvokeChannel, SyncChannel } from '../shared/ipcChannels';
 import type { AgentProvider } from '../shared/agentProvider';
 import type { HireManifest } from '../shared/hire';
 export type { HireManifest } from '../shared/hire';
@@ -30,6 +31,22 @@ export type IntegrationRecordView = Omit<IntegrationRecord, 'secretRef'> & { has
 
 // Injected at build time from package.json (see electron.vite.config.ts).
 declare const __APP_VERSION__: string;
+
+/** Electron's ipcRenderer, narrowed to the channel names in src/shared/ipcChannels.ts
+ *  (the main-process side is src/main/ipc/typedIpc.ts). Same object at runtime; a
+ *  channel missing from the contract is a compile error instead of a dead call. */
+interface TypedIpcRenderer {
+  // `any` mirrors Electron's own signatures; the bridge methods below type each result.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  invoke(channel: InvokeChannel, ...args: unknown[]): Promise<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sendSync(channel: SyncChannel, ...args: unknown[]): any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  on(channel: EventChannel, listener: (event: IpcRendererEvent, ...args: any[]) => void): TypedIpcRenderer;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  removeListener(channel: EventChannel, listener: (...args: any[]) => void): TypedIpcRenderer;
+}
+const ipcRenderer = electronIpcRenderer as unknown as TypedIpcRenderer;
 
 /** The renderer's roster as mirrored to `<harnessHome>/roster.json`. The agent
  *  entries stay `unknown` here for the same reason main leaves them opaque: the
@@ -603,13 +620,13 @@ const api = {
   resolveSessionCwd: (sessionId: string): Promise<string | null> =>
     ipcRenderer.invoke('session:resolveCwd', sessionId),
   onPtyData: (id: string, cb: (data: string) => void): (() => void) => {
-    const channel = `pty:data:${id}`;
+    const channel: EventChannel = `pty:data:${id}`;
     const listener = (_e: IpcRendererEvent, data: string) => cb(data);
     ipcRenderer.on(channel, listener);
     return () => ipcRenderer.removeListener(channel, listener);
   },
   onPtyExit: (id: string, cb: (info: PtyExit) => void): (() => void) => {
-    const channel = `pty:exit:${id}`;
+    const channel: EventChannel = `pty:exit:${id}`;
     const listener = (_e: IpcRendererEvent, info: PtyExit) => cb(info);
     ipcRenderer.on(channel, listener);
     return () => ipcRenderer.removeListener(channel, listener);
@@ -618,7 +635,7 @@ const api = {
    *  first-time engine-CLI install. The terminal should re-arm in place (clear the
    *  "process exited" line + re-enable input) so the relaunched CLI paints clean. */
   onPtyRelaunch: (id: string, cb: () => void): (() => void) => {
-    const channel = `pty:relaunch:${id}`;
+    const channel: EventChannel = `pty:relaunch:${id}`;
     const listener = () => cb();
     ipcRenderer.on(channel, listener);
     return () => ipcRenderer.removeListener(channel, listener);

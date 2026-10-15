@@ -3,7 +3,8 @@
  * process-global events), window geometry, the app menu, and munderdifflin:// hire
  * deep links that wait for the renderer to be ready.
  */
-import { BrowserWindow, dialog, ipcMain, Menu, screen, shell } from 'electron';
+import { BrowserWindow, dialog, Menu, screen, shell } from 'electron';
+import { ipcMain } from './ipc/typedIpc';
 import { join } from 'node:path';
 import { readConfig } from './config';
 import { analytics } from './analytics';
