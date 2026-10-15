@@ -8,6 +8,7 @@
  */
 
 const test = require('node:test');
+const { readMainSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -85,7 +86,7 @@ test('refreshGeneratedDocs replaces stale generated hive docs', (t) => {
 });
 
 test('hive-service bootstrap refreshes generated hive docs', () => {
-  const source = fs.readFileSync(path.join(__dirname, '..', 'src/main/index.ts'), 'utf8');
+  const source = readMainSource();
   const bootstrapBody = source.match(/function bootstrapHiveServices\(\): void \{([\s\S]*?)^\}/m)?.[1];
 
   assert.ok(bootstrapBody, 'bootstrapHiveServices() is missing');

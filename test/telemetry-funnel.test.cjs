@@ -7,6 +7,7 @@
 // the same pattern the rest of the suite uses for main-process wiring.
 
 const test = require('node:test');
+const { readMainSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -80,7 +81,7 @@ test('the new events stay anonymous by construction', () => {
 
 // ── index.ts wires the funnel at the four spawn sites ─────────────────────────
 
-const main = fs.readFileSync(path.resolve(__dirname, '..', 'src/main/index.ts'), 'utf8');
+const main = readMainSource();
 
 test('agent_spawn_attempted fires once per attempt, gated against the install relaunch', () => {
   assert.match(main, /if \(!opts\.noAutoInstall\) analytics\.track\('agent_spawn_attempted', \{ provider \}\);/);

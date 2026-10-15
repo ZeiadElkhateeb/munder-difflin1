@@ -31,6 +31,7 @@
  */
 
 const test = require('node:test');
+const { readMainSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -219,7 +220,7 @@ test('downloadSlackFile arms a socket timeout (source check — index.ts imports
   // way test/update-check-timeout.test.cjs pins updater.ts. A regression that
   // deletes the timeout must not pass silently; the full end-to-end download
   // stall lives in test/repro/bug-12.repro.cjs.
-  const src = fs.readFileSync(path.join(__dirname, '..', 'src/main/index.ts'), 'utf8');
+  const src = readMainSource();
   const fnStart = src.indexOf('function downloadSlackFile');
   assert.notStrictEqual(fnStart, -1, 'downloadSlackFile not found in src/main/index.ts');
   const body = src.slice(fnStart, src.indexOf('async function downloadSlackFiles', fnStart));

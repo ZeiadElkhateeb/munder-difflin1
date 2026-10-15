@@ -9,6 +9,7 @@
  */
 
 const test = require('node:test');
+const { readMainSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -87,7 +88,7 @@ test('patch refuses an unknown card without rewriting the ledger', (t) => {
 test('renderer task actions never send a whole stale ledger back to main', () => {
   const root = path.resolve(__dirname, '..');
   const preload = fs.readFileSync(path.join(root, 'src/preload/index.ts'), 'utf8');
-  const main = fs.readFileSync(path.join(root, 'src/main/index.ts'), 'utf8');
+  const main = readMainSource();
   const realtimeActions = fs.readFileSync(path.join(root, 'src/main/realtimeActions.ts'), 'utf8');
   const sources = [
     'src/renderer/src/components/AskMeTab.tsx',
@@ -117,7 +118,7 @@ test('renderer task actions never send a whole stale ledger back to main', () =>
 
 test('webhook dispatch appends via atomic addTask, not a stale whole-ledger rewrite', () => {
   const root = path.resolve(__dirname, '..');
-  const main = fs.readFileSync(path.join(root, 'src/main/index.ts'), 'utf8');
+  const main = readMainSource();
   const fn = main.slice(main.indexOf('function dispatchWebhookWork'),
     main.indexOf('function handleWebhookMessage'));
   // The card must be appended through hive.addTask(card) — which reads the LATEST

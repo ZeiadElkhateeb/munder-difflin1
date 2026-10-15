@@ -10,6 +10,7 @@
  */
 
 const test = require('node:test');
+const { readMainSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -26,7 +27,7 @@ function property(object, name) {
 }
 
 function browserWindowOptions() {
-  const text = fs.readFileSync(sourcePath, 'utf8');
+  const text = readMainSource();
   const source = ts.createSourceFile(sourcePath, text, ts.ScriptTarget.Latest, true);
   const windows = [];
 

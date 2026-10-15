@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('node:test');
+const { readMainSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const { mkdtempSync, readFileSync, writeFileSync, rmSync } = require('node:fs');
 const { tmpdir } = require('node:os');
@@ -47,7 +48,7 @@ test('batch errors identify the file without exposing its parent directory', () 
 });
 
 test('Electron picker and IPC validate the full selection rather than file zero', () => {
-  const source = readFileSync('src/main/index.ts', 'utf8');
+  const source = readMainSource();
   const start = source.indexOf("ipcMain.handle('hire:openFile'");
   const end = source.indexOf('\n/**', start);
   const handler = source.slice(start, end);

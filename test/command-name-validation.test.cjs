@@ -21,6 +21,7 @@
  */
 
 const test = require('node:test');
+const { readMainSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const loadTs = require('./load-ts.cjs');
 
@@ -116,7 +117,7 @@ test('pty.ts resolver validates before which/where', () => {
 });
 
 test('index.ts validates the bin at the spawn-request intake', () => {
-  const src = readSrc('src/main/index.ts');
+  const src = readMainSource();
   // The spawn path rejects a bin that is neither a plain name nor an absolute path,
   // and it does so BEFORE isCommandAvailable(bin) (which itself calls the resolver).
   assert.match(src, /if \(!isSafeCommandName\(bin\) && !isAbsolute\(bin\)\) \{/);

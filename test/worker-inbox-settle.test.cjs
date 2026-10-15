@@ -17,6 +17,7 @@
 // a follow-up that crossed the worker's done was never seen by anyone, so it
 // stays pending too. Requests and queries filed unread are reported back to god.
 const test = require('node:test');
+const { readMainSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -119,7 +120,7 @@ test('a message already filed under .done is left alone (never re-filed or dupli
 // The release path is the only caller, and it must be the DONE branch — pinned
 // by reading index.ts as text, since the tick is not importable on its own.
 test('the ephemeral-worker tick settles the inbox on the done path, up to the done signal, tells god, and only there', () => {
-  const source = fs.readFileSync(path.join(__dirname, '..', 'src/main/index.ts'), 'utf8');
+  const source = readMainSource();
   const done = source.indexOf('signaled done — releasing');
   assert.ok(done > 0, 'the done branch exists');
   const settle = source.indexOf('hive.settleInbox(workerId, doneAt)', done);

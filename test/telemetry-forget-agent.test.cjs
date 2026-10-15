@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('node:test');
+const { readMainSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const loadTs = require('./load-ts.cjs');
 
@@ -91,7 +92,7 @@ test('forgetAgent keeps usage for other agents', async (t) => {
 
 test('teardown resets telemetry when it forgets breaker state', () => {
   const indexPath = require('node:path').join(__dirname, '..', 'src', 'main', 'index.ts');
-  const rawSource = require('node:fs').readFileSync(indexPath, 'utf8');
+  const rawSource = readMainSource();
   const activeSource = rawSource
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .split('\n')

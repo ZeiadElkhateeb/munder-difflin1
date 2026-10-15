@@ -16,6 +16,7 @@
  */
 
 const assert = require('assert');
+const { readMainSource } = require('./main-source.cjs');
 const fs = require('fs');
 const path = require('path');
 
@@ -30,7 +31,7 @@ function test(name, fn) {
   }
 }
 
-const src = fs.readFileSync(path.join(__dirname, '..', 'src/main/index.ts'), 'utf8');
+const src = readMainSource();
 
 /** The body of the `slack:stop` IPC handler, from the handle() call to the
  *  matching `});` that closes it. */

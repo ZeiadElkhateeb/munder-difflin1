@@ -17,6 +17,7 @@
 //     the same pattern the rest of the suite uses for main-process wiring).
 
 const test = require('node:test');
+const { readMainSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -40,7 +41,7 @@ require.cache[posthogPath] = {
 const { Analytics, MESSAGE_SURFACES, isRendererMessageSurface } = loadTs('src/main/analytics.ts');
 
 const read = (rel) => fs.readFileSync(path.resolve(__dirname, '..', rel), 'utf8');
-const main = read('src/main/index.ts');
+const main = readMainSource();
 const preload = read('src/preload/index.ts');
 const telemetryDoc = read('TELEMETRY.md');
 

@@ -14,6 +14,7 @@
  * every unit test still green, because nothing pure is involved.
  */
 const test = require('node:test');
+const { readMainSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
@@ -35,9 +36,9 @@ test('the restart handler waits for an outcome instead of assuming one', () => {
 });
 
 test('cancelling the quit warning is wired to the restart handler', () => {
-  const src = read('src/main/index.ts');
-  assert.ok(src.includes("import { initAutoUpdater, abortPendingRestart } from './updater';"),
-    'index.ts must import the abort');
+  const src = readMainSource();
+  assert.ok(/import \{[^}]*\babortPendingRestart\b[^}]*\} from '\.\/updater';/.test(src),
+    'the main process must import the abort');
   const handler = src.slice(src.indexOf("ipcMain.handle('app:cancelClose'"));
   const body = handler.slice(0, handler.indexOf('\n});'));
   assert.ok(body.includes('abortPendingRestart()'),

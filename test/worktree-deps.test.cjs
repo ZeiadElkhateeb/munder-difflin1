@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('node:test');
+const { readMainSource } = require('./main-source.cjs');
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
@@ -167,7 +168,7 @@ test('does not remove a worktree node_modules link to another directory', async 
 });
 
 test('wires dependency linking into successful isolated worktree creation', () => {
-  const indexSource = fs.readFileSync(path.join(__dirname, '..', 'src/main/index.ts'), 'utf8');
+  const indexSource = readMainSource();
   const activeSource = indexSource
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .split('\n')
@@ -183,7 +184,7 @@ test('wires dependency linking into successful isolated worktree creation', () =
 });
 
 test('removes linked dependencies before worker retention checks', () => {
-  const indexSource = fs.readFileSync(path.join(__dirname, '..', 'src/main/index.ts'), 'utf8');
+  const indexSource = readMainSource();
   const activeSource = indexSource
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .split('\n')
