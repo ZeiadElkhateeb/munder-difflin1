@@ -304,6 +304,9 @@ app.on('will-quit', (e) => {
   if (analyticsFlushed) return;
   analyticsFlushed = true;
   e.preventDefault();
+  // Hive commits run in the background (services.ts); every quit, including an
+  // updater restart that never went through teardownAndQuit, commits what is queued.
+  try { hive.flushCommitsSync(); } catch (err) { console.error('[quit] flushCommits:', err); }
   const finish = (): void => app.exit(0);
   Promise.race([
     analytics.endSession(),

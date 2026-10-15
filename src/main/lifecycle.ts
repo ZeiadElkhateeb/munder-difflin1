@@ -41,6 +41,9 @@ export function teardownAndQuit(): void {
   try { persist.close(); } catch (e) { console.error('[quit] persist.close:', e); }
   try { hive.stopAllProxyBridges(); } catch (e) { console.error('[quit] stopAllProxyBridges:', e); }
   try { ptyManager.killAll(); } catch (e) { console.error('[quit] killAll:', e); }
+  // Last: anything the steps above queued (an archive on teardown, a routed
+  // message) is committed before the process goes away.
+  try { hive.flushCommitsSync(); } catch (e) { console.error('[quit] flushCommits:', e); }
   app.quit();
 }
 
@@ -171,6 +174,9 @@ export function registerLifecycleIpc(): void {
     try { stopWebhookServer(); } catch (e) { console.error('[changeHome] webhook.stop:', e); }
     try { memory.stop(); } catch (e) { console.error('[changeHome] memory.stop:', e); }
     try { reflector.stop(); } catch (e) { console.error('[changeHome] reflector.stop:', e); }
+    // Hive commits run in the background; wait for the one in flight and commit
+    // the rest NOW, or cpSync below can copy a half-written .git object.
+    try { hive.flushCommitsSync(); } catch (e) { console.error('[changeHome] flushCommits:', e); }
 
     if (mode === 'move' && oldHome) {
       try {
@@ -239,6 +245,8 @@ export function registerLifecycleIpc(): void {
     try { persist.close(); } catch (e) { console.error('[reset] persist.close:', e); }
     try { ptyManager.killAll(); } catch (e) { console.error('[reset] killAll:', e); }
     try { hive.removeExposedCodexData(); } catch (e) { console.error('[reset] removeExposedCodexData:', e); }
+    // A background git process still writing .git/objects makes rmSync throw ENOTEMPTY.
+    try { hive.flushCommitsSync(); } catch (e) { console.error('[reset] flushCommits:', e); }
     // Erase the hive (Michael's + every agent's memory, inboxes, tasks, board,
     // git history) and the semantic-memory palace. Only these harness-created
     // subdirs are removed — never the user's whole harnessHome folder.

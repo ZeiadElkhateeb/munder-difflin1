@@ -30,6 +30,10 @@ export const hive = new HiveManager(
     try { wc.send(channel, payload); return true; } catch { return false; }
   }
 );
+// Commit the hive in the background: a commit (with its inline gc) on the main
+// process would stall every IPC reply and PTY stream until git finished. Every
+// path that moves or wipes the hive calls hive.flushCommitsSync() first.
+hive.setCommitMode('async');
 // #7C — operator control state (pause/gate/steer/halt), read by the HookServer
 // when deciding hook returns.
 export const control = new ControlRegistry();
