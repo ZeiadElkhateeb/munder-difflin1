@@ -25,9 +25,9 @@ import { quarantineDirsToReap, quarantineStampMs, nextMineDelayMs } from './pala
  *  mine` honors .gitignore, so we drop one in each agent dir rather than touch the
  *  mine command.
  *
- *  MUST STAY IN SYNC with MINE_IGNORE_LINES in hive.ts — that copy is written when
+ *  MUST STAY IN SYNC with MINE_IGNORE_LINES in hive/util.ts — that copy is written when
  *  an agent spawns, this one on every mine cycle, and only this one reaches agents
- *  that are not currently running. See hive.ts for why `.codex/` matters beyond
+ *  that are not currently running. See hive/commitQueue.ts (untrackCodexHomes) for why `.codex/` matters beyond
  *  mempalace: it is also what stopped the hive's git repo from versioning every
  *  Codex transcript and sqlite log into a 7.5GB history. */
 const MINE_IGNORE_LINES = ['settings.json', 'cursor.json', 'inbox/', 'outbox/', '.codex/'];

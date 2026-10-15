@@ -58,7 +58,8 @@ src/
     ipc/                     handler-only IPC groups (app, config, fsGit, hive, catalog, integrations)
                              + typedIpc.ts, the contract-checked ipcMain
     pty.ts                   node-pty manager (spawn/write/resize/kill/stream)
-    hive.ts                  on-disk multi-agent layer (memory, mailboxes, router, async commit queue)
+    hive.ts                  HiveManager: on-disk multi-agent layer (workspaces, registry, router)
+    hive/                    its parts: types, commitQueue (git), providerHooks, shims, generatedDocs, util
     hooks.ts                 hook server + provider hook shims (`cth-hook`, `agy-hook`)
     memory.ts                semantic memory layer (CLI wrapper, degrade-to-noop)
     config.ts                harness config persistence + home setup

@@ -468,7 +468,7 @@ export class TelemetryCollector {
    *   ~/.grok/sessions/<encodeURIComponent(cwd)>/<sessionId>/usage.json
    *
    * and BOTH path parts are already resolved: the Grok hook bridge normalizes
-   * its camelCase payload to `session_id` (hive.ts GROK_HOOK_SHIM), which
+   * its camelCase payload to `session_id` (hive/shims.ts GROK_HOOK_SHIM), which
    * `recordSession` stores, so `resolveSessionId` and `resolveCwd` answer for a
    * Grok agent exactly as they do for a Claude one. Nothing new is plumbed here
    * — this only reads a file the CLI already maintains.

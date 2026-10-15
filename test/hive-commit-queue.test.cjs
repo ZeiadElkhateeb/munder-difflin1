@@ -92,7 +92,7 @@ test('flushCommitsSync overtakes a commit that is already running', async (t) =>
   fs.writeFileSync(path.join(root, 'first.md'), 'a');
   hive.commit('hive: first');
   // Let the debounce fire so a git child is genuinely in flight…
-  await waitFor(() => hive.inFlightGitPid !== null || !hive.hasPendingCommits());
+  await waitFor(() => hive.commits.inFlightGitPid !== null || !hive.hasPendingCommits());
   // …then queue more work and flush while it runs.
   fs.writeFileSync(path.join(root, 'second.md'), 'b');
   hive.commit('hive: second');

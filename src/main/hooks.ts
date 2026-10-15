@@ -2,7 +2,7 @@
  * HookServer — the bridge between `claude` lifecycle hooks and the harness.
  *
  * Each spawned agent is launched with `--settings` pointing its hooks at a tiny
- * shim (see HOOK_SHIM in hive.ts) that forwards the hook payload to the Unix
+ * shim (see HOOK_SHIM in hive/shims.ts) that forwards the hook payload to the Unix
  * domain socket this server listens on. We then:
  *   - drive avatar state from PreToolUse/PostToolUse/Notification/etc., and
  *   - report lifecycle boundaries while renderer-side guarded queues deliver

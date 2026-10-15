@@ -58,6 +58,8 @@ Some older tests still assert on renderer source text with regexes that expect `
 
 ### The hive (`main/hive.ts`, `HiveManager`)
 
+`hive.ts` holds `HiveManager` (workspace, registry, routing, spawn injection); its supporting code is in `main/hive/` (`types`, `commitQueue`, `providerHooks`, `shims`, `generatedDocs`, `util`) and is re-exported from `hive.ts`, so import from `./hive`.
+
 A local git repo of plain files under `<harnessHome>/hive/`: `registry.json`, `board.md`, `tasks.json`, `log.jsonl`, and per agent `agents/<id>/{identity.md, memory.md, inbox/, outbox/, cursor.json}`. Invariants that the rest of the code relies on:
 
 - **Single committer**: only the main process runs git on the hive. Agents never do.
