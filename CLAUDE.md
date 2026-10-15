@@ -21,7 +21,7 @@ npm run check:links      # release gate: download links / version strings must m
 npm run dist:win|dist:mac|dist:linux   # packaged builds via electron-builder
 ```
 
-CI (`.github/workflows/ci.yml`) runs `typecheck`, `check:links`, and `build`. There is no linter.
+CI (`.github/workflows/ci.yml`) runs `typecheck`, `check:links`, `test:focused` (on macOS), and `build`. There is no linter.
 
 Blog (separate Eleventy project): `cd blog && npm ci && npm run build`. The built output in `docs/blog` and `docs/sitemap.xml` must be committed with the source change — the `blog.yml` workflow rebuilds and fails on stale output.
 
