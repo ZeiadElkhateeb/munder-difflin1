@@ -43,9 +43,22 @@ Two data planes feed one renderer:
 ```
 src/
   main/                      Electron main process (Node)
-    index.ts                 window, IPC handlers, quit guard
+    index.ts                 composition root: process guards, deep links, whenReady, quit hooks,
+                             one registerXxx() call per domain module below
+    services.ts              the long-lived singletons (ptyManager, hive, hookServer, telemetry, …)
+    windows.ts               window registry + liveWebContents, geometry, app menu, hire deep links
+    agentSpawn.ts            spawn an agent into a PTY, teardown, exit handler, pty:* IPC
+    workers.ts               god-triggered ephemeral workers (spawn requests, worktree GC)
+    schedules.ts             recurring missions + context triggers (compact / clear)
+    heartbeat.ts             fleet snapshot, breaker beat, heartbeat mission, worker-wake beat
+    slackService.ts          Slack ingress, replies, done-notifier
+    webhookService.ts        inbound webhooks, held approvals, trigger history
+    lifecycle.ts             bootstrap hive services; quit / closing time / reset / change home
+    realtimeWiring.ts        Realtime Michael (voice) wiring
+    ipc/                     handler-only IPC groups (app, config, fsGit, hive, catalog, integrations)
+                             + typedIpc.ts, the contract-checked ipcMain
     pty.ts                   node-pty manager (spawn/write/resize/kill/stream)
-    hive.ts                  on-disk multi-agent layer (memory, mailboxes, router)
+    hive.ts                  on-disk multi-agent layer (memory, mailboxes, router, async commit queue)
     hooks.ts                 hook server + provider hook shims (`cth-hook`, `agy-hook`)
     memory.ts                semantic memory layer (CLI wrapper, degrade-to-noop)
     config.ts                harness config persistence + home setup
@@ -59,6 +72,8 @@ src/
     shellEnv.ts              resolve PATH and shell env for child processes
     fs.ts / git.ts           sandboxed filesystem + git bridges
   preload/                   contextBridge → typed window.cth API
+  shared/                    dependency-free code for main + preload + renderer;
+    ipcChannels.ts           every IPC channel name (the contract both sides compile against)
   renderer/src/
     App.tsx                  top-level layout + wiring
     design/                  tokens.css / tokens.ts / global.css (design source of truth)
