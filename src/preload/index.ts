@@ -32,6 +32,14 @@ export type IntegrationRecordView = Omit<IntegrationRecord, 'secretRef'> & { has
 // Injected at build time from package.json (see electron.vite.config.ts).
 declare const __APP_VERSION__: string;
 
+/** Payload of hive:degraded (emitted by HiveManager when a spawn loses hive events). */
+export interface HiveDegradedEvent {
+  agentId: string;
+  name: string;
+  reason: 'proxy-bind';
+  message: string;
+}
+
 /** Electron's ipcRenderer, narrowed to the channel names in src/shared/ipcChannels.ts
  *  (the main-process side is src/main/ipc/typedIpc.ts). Same object at runtime; a
  *  channel missing from the contract is a compile error instead of a dead call. */
@@ -901,13 +909,12 @@ const api = {
     ipcRenderer.on('hive:message', listener);
     return () => ipcRenderer.removeListener('hive:message', listener);
   },
-  /** Register a listener for hive tasks routed to non-Claude agents (e.g.
-   *  Codex). Main emits this instead of bouncing; the renderer enqueues the
-   *  raw text so the drain effect types it into the agent's REPL when idle. */
-  onHiveEnqueue: (cb: (e: { targetId: string; text: string }) => void): (() => void) => {
-    const listener = (_e: IpcRendererEvent, payload: { targetId: string; text: string }) => cb(payload);
-    ipcRenderer.on('hive:enqueueToAgent', listener);
-    return () => ipcRenderer.removeListener('hive:enqueueToAgent', listener);
+  /** An agent spawned without hive events (its proxy bridge never bound): no live
+   *  status, cost or inbox wake for this session. `message` says what to do. */
+  onHiveDegraded: (cb: (e: HiveDegradedEvent) => void): (() => void) => {
+    const listener = (_e: IpcRendererEvent, payload: HiveDegradedEvent) => cb(payload);
+    ipcRenderer.on('hive:degraded', listener);
+    return () => ipcRenderer.removeListener('hive:degraded', listener);
   },
   /** A MAIN-initiated agent spawn (e.g. a voice hire via rt-5) — the renderer adds
    *  the floor card from this descriptor since it didn't initiate the hire itself. */

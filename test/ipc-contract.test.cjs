@@ -44,15 +44,14 @@ const invoked = new Set(literals(preload, /ipcRenderer\.invoke\(\s*'([^']+)'/g))
 const sentSync = new Set(literals(preload, /ipcRenderer\.sendSync\(\s*'([^']+)'/g));
 const subscribed = new Set(literals(preload, /ipcRenderer\.on\(\s*'([^']+)'/g));
 
-/** Registered in main, never called by the bridge (the renderer reads the roster
- *  synchronously through roster:readSync at startup). */
-const KNOWN_UNCALLED = ['roster:read'];
-/** Subscribed by the bridge, never sent: the voice action that would have used it
- *  sends realtime:enqueue instead (realtimeWiring.ts). */
-const KNOWN_UNSENT = ['hive:enqueueToAgent'];
-/** Sent by main, never subscribed by the bridge: the proxy-bind failure notice
- *  (hive.ts) reaches log.jsonl and the registry, but no renderer listener. */
-const KNOWN_UNSUBSCRIBED = ['hive:degraded'];
+// Deliberate exceptions, each with the reason it is one. Empty is the goal; an
+// entry that stops being an exception fails the test so these lists cannot rot.
+/** Registered in main, never called by the bridge. */
+const KNOWN_UNCALLED = [];
+/** Subscribed by the bridge, never sent by main. */
+const KNOWN_UNSENT = [];
+/** Sent by main, never subscribed by the bridge. */
+const KNOWN_UNSUBSCRIBED = [];
 
 test('the contract lists have no duplicates and no channel in two lists', () => {
   const all = [...INVOKE_CHANNELS, ...SYNC_CHANNELS, ...EVENT_CHANNELS];

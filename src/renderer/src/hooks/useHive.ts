@@ -990,16 +990,18 @@ export function useHive(config: HarnessConfig | null): void {
     });
   }, [config?.onboardingComplete]);
 
-  // 5b) Pipe hive tasks addressed to non-Claude agents (e.g. Codex) into their
-  //     terminal queues. When main routes a message to a non-claude provider it
-  //     emits 'hive:enqueueToAgent' instead of bouncing; we enqueue the raw
-  //     task text here so effect #4 types it into the REPL when the agent idles.
-  //     No inbox nudge, no /compact — just the verbatim subject+body text.
+  // 5b) An agent that spawned without hive events (proxy bridge never bound) gets
+  //     no live status from hooks, so its card's action line would otherwise sit
+  //     on whatever it last said. Put the reason there instead; nothing from the
+  //     event plane will overwrite it for this session. (Main also raises a native
+  //     notification when notifications are on.)
   useEffect(() => {
     if (!config?.onboardingComplete) return;
-    return window.cth.onHiveEnqueue?.((msg) => {
-      if (!msg?.targetId || !msg?.text?.trim()) return;
-      useStore.getState().enqueueMessage(msg.targetId, msg.text.trim());
+    return window.cth.onHiveDegraded?.((evt) => {
+      if (!evt?.agentId) return;
+      useStore.getState().updateAgent(evt.agentId, {
+        action: '⚠ running without hive events: respawn to retry'
+      });
     });
   }, [config?.onboardingComplete]);
 
