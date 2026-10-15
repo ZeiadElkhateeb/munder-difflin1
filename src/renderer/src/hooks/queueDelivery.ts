@@ -55,6 +55,65 @@ export function canDeliverToAgent(
   return ptyQuietMs !== null && ptyQuietMs >= quiesceMs;
 }
 
+/** Why the drain is holding the front of a queue, or null when it may type. */
+export type DeliveryBlock = 'not-deliverable' | 'paused' | 'boot-grace' | 'user-owns-prompt' | 'cooldown';
+
+export interface DeliveryGateInput {
+  now: number;
+  status: string;
+  ptyQuietMs: number | null;
+  quiesceMs: number;
+  /** Floor-wide / per-agent auto-delivery pause (Command Center). */
+  autoDeliveryPaused: boolean;
+  /** The user released this message with "send now". */
+  manual: boolean;
+  /** Epoch ms until which the agent is still painting its boot sequence. */
+  bootGraceUntil: number;
+  /** Lazily asks the terminal whether the user owns the prompt (a draft or an
+   *  open menu). Only consulted once every cheaper gate has passed. */
+  terminalSafe: () => boolean;
+  /** Epoch ms of the last delivery to this agent (0 = never). */
+  lastFlushAt: number;
+  cooldownMs: number;
+}
+
+/**
+ * The drain's gates, in order, for one message at the front of one queue. Every
+ * automatic write into an agent's PTY passes here (docs/message-queue.md §2):
+ *
+ *   1. the agent can take input (canDeliverToAgent) — `manual` does NOT bypass
+ *      this: it is a don't-type-mid-stream safety check, not a policy;
+ *   2. auto-delivery is not paused — the ONE gate "send now" releases;
+ *   3. the boot sequence is over;
+ *   4. the user does not own the prompt;
+ *   5. the per-agent cooldown has passed (back-to-back sends jam the TUI).
+ */
+export function deliveryBlocker(g: DeliveryGateInput): DeliveryBlock | null {
+  if (!canDeliverToAgent(g.status, g.ptyQuietMs, g.quiesceMs)) return 'not-deliverable';
+  if (g.autoDeliveryPaused && !g.manual) return 'paused';
+  if (g.bootGraceUntil >= g.now) return 'boot-grace';
+  if (!g.terminalSafe()) return 'user-owns-prompt';
+  if (g.now - g.lastFlushAt < g.cooldownMs) return 'cooldown';
+  return null;
+}
+
+/** Count one failed PTY write for a message. Returns 'drop' once it has failed
+ *  `maxAttempts` times (and forgets it), so the drain never spins forever on a
+ *  dead terminal the store still believes is idle (#113). */
+export function noteSendFailure(
+  failures: Record<string, number>,
+  messageId: string,
+  maxAttempts: number
+): { verdict: 'retry' | 'drop'; attempts: number } {
+  const attempts = (failures[messageId] ?? 0) + 1;
+  if (attempts >= maxAttempts) {
+    delete failures[messageId];
+    return { verdict: 'drop', attempts };
+  }
+  failures[messageId] = attempts;
+  return { verdict: 'retry', attempts };
+}
+
 /** The subset of a QueuedMessage this module needs. Kept structural so the
  *  gate is testable without dragging the store (and zustand) into the test. */
 export interface DeliveryGateMessage {

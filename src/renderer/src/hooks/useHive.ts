@@ -21,7 +21,7 @@ import { isDurableRole, preferredAgentRole, roleForHiveSpawn } from '../../../sh
 import { inboxNudgeText } from '../../../shared/hiveNudge';
 import { resolveGodName } from '../../../shared/godIdentity';
 import { acquireTerminal, resetTerminal, isTerminalAutomationSafe } from '@/components/terminalPool';
-import { canDeliverToAgent, deliverWithAcknowledgement, checkPrecondition } from './queueDelivery';
+import { canDeliverToAgent, deliverWithAcknowledgement, checkPrecondition, deliveryBlocker, noteSendFailure } from './queueDelivery';
 import { OFFICE_CAST, DEFAULT_CHARACTER } from '@/scene/office/cast';
 
 const GOD_ID = 'god';
@@ -804,26 +804,29 @@ export function useHive(config: HarnessConfig | null): void {
       const next = messageQueues[srcId]?.[0];
       if (!next || !target?.ptyId) return { sent: false };
       const now = Date.now();
-      // Idle, or breaker-pinned with a terminal that has genuinely gone quiet.
-      // This gate is a don't-type-mid-stream safety check, so `manual` does NOT
-      // bypass it — "send now" releases the auto-delivery PAUSE below, not this.
-      if (!canDeliverToAgent(target.status, ptyQuietMs(target.ptyId, now), QUIESCE_IDLE_MS)) {
-        return { sent: false };
-      }
+      const quietMs = ptyQuietMs(target.ptyId, now);
+      // Cheap pre-check before the control-snapshot IPC; deliveryBlocker repeats it.
+      if (!canDeliverToAgent(target.status, quietMs, QUIESCE_IDLE_MS)) return { sent: false };
       const control = await window.cth.controlSnapshot(target.id);
-      // The pause gate holds everything EXCEPT messages the user explicitly
-      // released with "send now" (m.manual) — otherwise a paused floor leaves
-      // the queue with no escape hatch at all. Idle/draft/picker safety below
-      // still applies to manual messages; only the pause is bypassed.
-      if (control?.autoDeliveryPaused && !next.manual) return { sent: false };
-      // Hold queued messages until the target finishes its boot sequence.
-      if ((bootGraceUntil.current[target.id] ?? 0) >= now) return { sent: false };
-      // The user owns the prompt: a draft they are writing, or a menu they
-      // opened, holds delivery. Both blocks expire after half an hour, and when
-      // one does we simply type after whatever is there — automation never
-      // erases the user's text and never closes the user's menu.
-      if (!isTerminalAutomationSafe(target.ptyId, now)) return { sent: false };
-      if (now - (lastFlush.current[target.id] ?? 0) < FLUSH_COOLDOWN_MS) return { sent: false };
+      const ptyId = target.ptyId;
+      // The ordered gate (queueDelivery.ts): deliverable → not paused (the one gate
+      // "send now" releases) → boot over → user does not own the prompt → cooldown.
+      // A draft or an open menu holds delivery; both blocks expire after half an
+      // hour, and then we type after whatever is there — automation never erases
+      // the user's text and never closes the user's menu.
+      const blocked = deliveryBlocker({
+        now,
+        status: target.status,
+        ptyQuietMs: quietMs,
+        quiesceMs: QUIESCE_IDLE_MS,
+        autoDeliveryPaused: !!control?.autoDeliveryPaused,
+        manual: !!next.manual,
+        bootGraceUntil: bootGraceUntil.current[target.id] ?? 0,
+        terminalSafe: () => isTerminalAutomationSafe(ptyId, now),
+        lastFlushAt: lastFlush.current[target.id] ?? 0,
+        cooldownMs: FLUSH_COOLDOWN_MS
+      });
+      if (blocked) return { sent: false };
       // Last gate before we type: re-check the message's delivery-time
       // precondition. A queue item is decided at enqueue time and delivered an
       // arbitrary interval later, and the inbox nudge is only worth sending if
@@ -871,10 +874,8 @@ export function useHive(config: HarnessConfig | null): void {
         // Failed write (dead/crashed pty the store still thinks is idle): retry
         // on the next cooldown-spaced flush, but only MAX_SEND_ATTEMPTS times —
         // then drop LOUDLY so the loss is diagnosable. (#113/#36)
-        const attempts = (sendFailures[next.id] ?? 0) + 1;
-        sendFailures[next.id] = attempts;
-        if (attempts >= MAX_SEND_ATTEMPTS) {
-          delete sendFailures[next.id];
+        const { verdict, attempts } = noteSendFailure(sendFailures, next.id, MAX_SEND_ATTEMPTS);
+        if (verdict === 'drop') {
           removeQueuedMessage(srcId, next.id);
           console.warn(
             `[queue-drain] dropping message ${next.id} for ${target.id} after ${attempts} failed pty writes ` +
