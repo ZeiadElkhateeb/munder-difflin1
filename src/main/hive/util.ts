@@ -20,6 +20,12 @@ export function shortRand(): string {
   return randomBytes(3).toString('hex');
 }
 
+/** True when `id` is one plain path segment, so `join(dir, id)` stays inside `dir`.
+ *  Agents author message ids and recipients, and the router turns them into paths. */
+export function isPathSegment(id: unknown): id is string {
+  return typeof id === 'string' && id !== '' && id !== '.' && id !== '..' && !/[\\/\0]/.test(id);
+}
+
 export const MINE_IGNORE_LINES = ['settings.json', 'cursor.json', 'inbox/', 'outbox/', '.codex/'];
 
 /** Idempotently ensure `<agentDir>/.gitignore` excludes the non-memory files.

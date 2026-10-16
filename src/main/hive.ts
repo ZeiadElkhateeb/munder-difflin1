@@ -43,7 +43,7 @@ import { resolveGodName } from '../shared/godIdentity';
 import { GENERATED_HIVE_DOCS } from './hive/generatedDocs';
 import type { Registry, AgentMeta, SpawnInjection, SettledInbox, HiveMessage, McpDefaultsMap, MessageAct, HiveTask, VoiceMessage } from './hive/types';
 import { HOOK_SHIM, PROXY_BRIDGE_SHIM } from './hive/shims';
-import { ensureMineIgnore, stamp, shortRand, repairLiteralLineBreaksInJsonStrings, redactSecrets, pruneCrashLogs } from './hive/util';
+import { ensureMineIgnore, stamp, shortRand, isPathSegment, repairLiteralLineBreaksInJsonStrings, redactSecrets, pruneCrashLogs } from './hive/util';
 import { HiveCommitQueue } from './hive/commitQueue';
 import { ProviderHooks } from './hive/providerHooks';
 
@@ -1318,7 +1318,8 @@ export class HiveManager {
   private normalize(partial: Partial<HiveMessage>, from: string): HiveMessage {
     const act = (partial.act ?? 'inform') as MessageAct;
     return {
-      id: partial.id ?? `${stamp()}-${shortRand()}`,
+      // The id becomes the inbox file name; anything that is not one path segment is replaced.
+      id: isPathSegment(partial.id) ? partial.id : `${stamp()}-${shortRand()}`,
       conversation: partial.conversation ?? `conv-${shortRand()}`,
       in_reply_to: partial.in_reply_to ?? null,
       from: partial.from ?? from,
@@ -1344,6 +1345,7 @@ export class HiveManager {
    *  Returns false when the recipient has no inbox, so the caller can bounce and
    *  log the drop rather than let the message vanish. */
   private deliver(msg: HiveMessage, toId: string): boolean {
+    if (!isPathSegment(toId) || !isPathSegment(msg.id)) return false; // e.g. to: "../../x" — never a real agent
     const inbox = join(this.agentDir(toId), 'inbox');
     if (!existsSync(inbox)) return false; // unknown recipient — the caller reports it
     this.atomicWriteJson(join(inbox, `${msg.id}.json`), msg);
