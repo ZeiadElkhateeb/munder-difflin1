@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useStore, selectedAgent } from '@/store/store';
 import { startMockLoop, stopMockLoop } from '@/store/mockEvents';
 import type { HarnessConfig } from '@/store/config';
@@ -29,9 +29,11 @@ import { SidebarSplitter } from '@/components/SidebarSplitter';
 import { acquireTerminal, notifyThemeChangeAll } from '@/components/terminalPool';
 import { FullscreenTerminal } from '@/components/FullscreenTerminal';
 import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';
-import { IdePanel } from '@/ide/IdePanel';
 import { useHoldOptionToTalk } from '@/freeflow/holdOption';
 import brandLogo from '@brand/logo.png?url';
+
+// Lazy: the IDE pulls in all of Monaco, which otherwise sits in the boot chunk.
+const IdePanel = lazy(() => import('@/ide/IdePanel').then((m) => ({ default: m.IdePanel })));
 
 // Injected at build time from package.json (see electron.vite.config.ts).
 declare const __APP_VERSION__: string;
@@ -510,7 +512,7 @@ export function App() {
       )}
 
       {fullscreenAgentId && <FullscreenTerminal config={config} />}
-      {ideOpen && <IdePanel />}
+      {ideOpen && <Suspense fallback={null}><IdePanel /></Suspense>}
       <TaskDetailOverlay />
     </div>
   );
