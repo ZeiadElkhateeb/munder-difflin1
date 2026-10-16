@@ -33,7 +33,7 @@ Blog (separate Eleventy project): `cd blog && npm ci && npm run build`. The buil
 
 Tests are plain CommonJS (`test/*.test.cjs`) using `node:test`. `test/load-ts.cjs` transpiles `src/**/*.ts` on the fly with the TypeScript compiler (resolving `@shared/` imports), so tests import TS modules directly: `loadTs('src/main/workerWake.ts')`. Modules meant to be tested avoid importing `electron` (e.g. `workerWake.ts`, `control.ts`, `breaker.ts`) — keep that property when adding logic you want covered.
 
-Tests that pin main-process wiring by reading source text use `readMainSource()` from `test/main-source.cjs` (the concatenated, LF-normalized split modules). When you add a module carved out of the main wiring, add it to `MAIN_WIRING_FILES` there. Prefer extracting a pure function and testing behaviour over adding new source-text tests.
+Tests that pin main-process wiring by reading source text use `readMainSource()` from `test/main-source.cjs` (the concatenated, LF-normalized split modules). When you add a module carved out of the main wiring, add it to `MAIN_WIRING_FILES` there; `readUseHiveSource()` does the same for `useHive.ts` + `hooks/hive/`. Prefer extracting a pure function and testing behaviour over adding new source-text tests.
 
 Some older tests still assert on renderer source text with regexes that expect `\n` line endings, so they fail on a CRLF checkout (`core.autocrlf=true`). Symlink tests fail on Windows without Developer Mode. Those failures are environmental, not regressions.
 
@@ -48,7 +48,7 @@ Some older tests still assert on renderer source text with regexes that expect `
   - Shared mutable state that several modules write lives behind accessors (e.g. `quitState.ts`), because an imported `let` cannot be reassigned.
 - `src/preload/index.ts` — exposes the whole typed API as `window.cth` via `contextBridge`. The renderer talks to main **only** through `window.cth`.
 - **IPC contract**: every channel name is listed in `src/shared/ipcChannels.ts`. Main imports `ipcMain` from `src/main/ipc/typedIpc.ts` and preload narrows `ipcRenderer` the same way, so an unlisted channel is a compile error. `test/ipc-contract.test.cjs` checks each request channel has exactly one handler and a caller, and that pushed events are subscribed. Adding a capability = add the channel to the contract, a handler in the owning main module, a method in preload.
-- `src/renderer/src/` — React UI (zustand store in `store/store.ts`; hive wiring in `hooks/useHive.ts`; Pixi floor in `scene/office/`).
+- `src/renderer/src/` — React UI. The zustand store (`store/store.ts`) is composed from slices in `store/slices/` (agents, queue, ui, integrations), with data shapes in `store/types.ts` and localStorage/roster-file persistence in `store/persistence.ts`. Hive wiring is `hooks/useHive.ts`, which calls one hook per concern from `hooks/hive/` in a fixed order (React runs effects in declaration order, so keep it). Settings sections live in `components/settings/`. Pixi floor in `scene/office/`.
 - `src/shared/` — dependency-free code used by both sides (no electron, no UI). Imported as `@shared/...`.
 
 ### Two data planes
@@ -80,7 +80,7 @@ Shared behavior must stay provider-neutral; provider-specific logic goes behind 
 
 ### Writing into an agent's terminal
 
-There is one gate: the renderer's MD-queue drain loop in `useHive.ts`. Composer input, Slack ingress, inbox nudges, and scheduled commands all `enqueueMessage(...)`; the drain delivers only when the agent is idle, auto-delivery isn't paused, it is past boot grace, the user doesn't own the prompt (`isTerminalAutomationSafe`), and a cooldown has passed. That ordered decision is the pure `deliveryBlocker()` in `hooks/queueDelivery.ts` (behaviour-tested in `test/queue-delivery-gate.test.cjs`); "send now" bypasses only the pause. Don't add a second writer. The main-process `workerWake.ts` watchdog is the deliberate backstop for when the renderer's timers are throttled, and mirrors the same guards. See `docs/message-queue.md`.
+There is one gate: the renderer's MD-queue drain loop in `hooks/hive/messageDelivery.ts` (composed by `useHive`). Composer input, Slack ingress, inbox nudges, and scheduled commands all `enqueueMessage(...)`; the drain delivers only when the agent is idle, auto-delivery isn't paused, it is past boot grace, the user doesn't own the prompt (`isTerminalAutomationSafe`), and a cooldown has passed. That ordered decision is the pure `deliveryBlocker()` in `hooks/queueDelivery.ts` (behaviour-tested in `test/queue-delivery-gate.test.cjs`); "send now" bypasses only the pause. Don't add a second writer. The main-process `workerWake.ts` watchdog is the deliberate backstop for when the renderer's timers are throttled, and mirrors the same guards. See `docs/message-queue.md`.
 
 ### Safety and cost
 

@@ -84,8 +84,12 @@ src/
     TasksKanban,             dependency-aware kanban board (Tasks tab)
     ThreadsPanel,            hive message conversation viewer (Messages tab)
     MessageQueueComposer,    park messages for a busy agent
+    components/settings/     SettingsModal's state hook (useSettingsState) + one component per section
     scene/office/            Pixi office floor: OfficeFloor, Character, Camera, cast, pathfinding, …
-    store/ · hooks/          zustand store, event loop, PTY parser, typewriter
+    store/                   zustand store composed from slices/ (agents, queue, ui, integrations);
+                             types.ts, persistence.ts (localStorage + roster.json mirror)
+    hooks/                   useHive → hooks/hive/ (god bootstrap, hook feeds, message delivery,
+                             main bridges, context triggers, auto-revive), PTY parser, typewriter
     assets/                  tilesets, maps, character sheets (see ATTRIBUTION.md)
 docs/                        `logo.png`, `banner.png`, landing page (GitHub Pages → munderdiffl.in)
 docs/media/                  `og.png` (social previews) + rendered Remotion clips
