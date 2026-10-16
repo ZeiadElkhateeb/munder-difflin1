@@ -8,6 +8,19 @@ Munder Difflin: an Electron desktop app (React + TypeScript + Pixi.js + xterm.js
 
 Design docs: `HIVE.md` (multi-agent layer — source of truth for intent), `docs/ARCHITECTURE.md` (module map), `docs/message-queue.md` (who may type into a PTY and when), `DESIGN.md` (visual system). `SPEC.md` is the original MVP spec and is partly stale (it describes tmux; the code uses node-pty).
 
+## Sync & Run routine
+
+When I say "sync and run" (or similar):
+
+1. `git status`. If there are uncommitted changes, stash them, or ask before committing. Never overwrite CLAUDE.md edits.
+2. Pull from my fork (upstream).
+3. Push to my private repo (origin). Report unpushed local commits.
+4. Before launching, kill any leftover/stale app instances that could hold the hook pipe.
+5. Launch the app in dev mode ON SCREEN with my normal profile — never headless or in a throwaway sandbox profile.
+6. If the app exits, read the logs and report the cause in 2–3 lines.
+
+If nothing changed since the last sync, say so in one line.
+
 ## Commands
 
 ```bash
@@ -48,7 +61,7 @@ Some older tests still assert on renderer source text with regexes that expect `
   - Shared mutable state that several modules write lives behind accessors (e.g. `quitState.ts`), because an imported `let` cannot be reassigned.
 - `src/preload/index.ts` — exposes the whole typed API as `window.cth` via `contextBridge`. The renderer talks to main **only** through `window.cth`.
 - **IPC contract**: every channel name is listed in `src/shared/ipcChannels.ts`. Main imports `ipcMain` from `src/main/ipc/typedIpc.ts` and preload narrows `ipcRenderer` the same way, so an unlisted channel is a compile error. `test/ipc-contract.test.cjs` checks each request channel has exactly one handler and a caller, and that pushed events are subscribed. Adding a capability = add the channel to the contract, a handler in the owning main module, a method in preload.
-- `src/renderer/src/` — React UI. The zustand store (`store/store.ts`) is composed from slices in `store/slices/` (agents, queue, ui, integrations), with data shapes in `store/types.ts` and localStorage/roster-file persistence in `store/persistence.ts`. Hive wiring is `hooks/useHive.ts`, which calls one hook per concern from `hooks/hive/` in a fixed order (React runs effects in declaration order, so keep it). Settings sections live in `components/settings/`. Pixi floor in `scene/office/`.
+- `src/renderer/src/` — React UI. The zustand store (`store/store.ts`) is composed from slices in `store/slices/` (agents, queue, ui, integrations), with data shapes in `store/types.ts` and localStorage/roster-file persistence in `store/persistence.ts`. Hive wiring is `hooks/useHive.ts`, which calls one hook per concern from `hooks/hive/` in a fixed order (React runs effects in declaration order, so keep it). Settings sections live in `components/settings/`. Pixi floor in `scene/office/`. The IDE (`ide/`, Monaco) is `React.lazy`-loaded from `App.tsx`; a static import of `@/ide/...` from boot-path code puts ~6 MB back into the main chunk.
 - `src/shared/` — dependency-free code used by both sides (no electron, no UI). Imported as `@shared/...`.
 
 ### Two data planes
@@ -65,6 +78,7 @@ A local git repo of plain files under `<harnessHome>/hive/`: `registry.json`, `b
 - **Single committer**: only the main process runs git on the hive. Agents never do.
 - **Commits are async in the app**: `HiveManager` commits synchronously by default (tests, scripts), but `services.ts` calls `hive.setCommitMode('async')`, which debounces commits into one batch per root and runs git as a child process so a commit (and its inline `gc`) never blocks the main event loop. Anything that copies, wipes or abandons the hive must call `hive.flushCommitsSync()` first (see `lifecycle.ts` and the `will-quit` hook).
 - **Single writer per file**: an agent writes only into its own `outbox/`; the router (`routeOnce`, ~1.5 s interval) moves messages into recipients' `inbox/`. Message files are written atomically (temp + rename), one JSON file per message.
+- **Outbox JSON is untrusted**: agents hand-write it, and the router runs outside any agent sandbox. Any field that becomes a path (`id`, `to`) must pass `isPathSegment` (`hive/util.ts`).
 - Messages use speech acts (`request | inform | propose | query | agree | refuse | done`) with a `hops` counter to stop ping-pong loops.
 - **Autonomous loop**: when an agent tries to stop, the Stop hook calls `drainForStop`; unread mail returns `{decision:"block", reason}` so the agent keeps working.
 - The injected system prompt (`injectedPrompt`) must stay **volatile-free** (no dates, counters, live state) to preserve prompt caching, and must contain **no shell syntax** (`$VAR`, hand-joined `/` paths) — absolute paths via `path.join` so it works in cmd/PowerShell too.
@@ -85,6 +99,8 @@ There is one gate: the renderer's MD-queue drain loop in `hooks/hive/messageDeli
 ### Safety and cost
 
 `breaker.ts` is a pure circuit breaker escalating steer → constrain → stop, one level per beat; `control.ts` is the HITL gate / pause / steer registry. Cost comes from `telemetry.ts` (OTel), `transcript.ts` (Claude JSONL transcripts), and `pricing.ts`, recorded to a ledger via `db.ts` (better-sqlite3).
+
+Inbound webhooks (`webhookService.ts`, `webhook.ts`) are a public trust boundary. Each endpoint's `TriggerMode` (`shared/triggers.ts`: strict / allow-all / communication-only) decides what reaches god without the operator's approval; a caller's declared `kind` may only make a message stricter, never looser.
 
 ## Conventions
 
