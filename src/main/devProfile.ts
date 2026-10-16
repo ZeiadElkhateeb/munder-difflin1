@@ -12,11 +12,16 @@
  * lazily, and Electron only honours setPath('userData') before first use.
  *
  * Set MUNDER_DIFFLIN_PROFILE=default to run a dev build against the real profile.
+ * An explicit --user-data-dir (test drivers, throwaway profiles) is left alone.
  */
 import { app } from 'electron';
 
 export const DEV_PROFILE_SUFFIX = '-dev';
 
-if (!app.isPackaged && process.env.MUNDER_DIFFLIN_PROFILE !== 'default') {
+if (
+  !app.isPackaged &&
+  process.env.MUNDER_DIFFLIN_PROFILE !== 'default' &&
+  !app.commandLine.hasSwitch('user-data-dir')
+) {
   app.setPath('userData', `${app.getPath('userData')}${DEV_PROFILE_SUFFIX}`);
 }
