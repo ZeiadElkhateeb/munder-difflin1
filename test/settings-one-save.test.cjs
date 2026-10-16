@@ -15,7 +15,14 @@ const path = require('node:path');
 
 const root = path.join(__dirname, '..');
 const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
-const MODAL = read('src/renderer/src/components/SettingsModal.tsx');
+// The modal is SettingsModal.tsx plus its state hook and section components in
+// components/settings/; the rules below hold across all of them.
+const MODAL = [
+  'src/renderer/src/components/SettingsModal.tsx',
+  ...fs.readdirSync(path.join(root, 'src/renderer/src/components/settings'))
+    .filter((f) => /\.tsx?$/.test(f)).sort()
+    .map((f) => `src/renderer/src/components/settings/${f}`)
+].map((p) => read(p).replace(/\r\n/g, '\n')).join('\n');
 
 test('there is exactly one writer of config in the whole modal', () => {
   const calls = MODAL.match(/window\.cth\.updateConfig\(/g) ?? [];
