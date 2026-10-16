@@ -229,7 +229,10 @@ test('the composer counts its own submit, not the shared enqueue action', () => 
   // enqueueMessage is also how work orders, Slack inbound, nudges and compact
   // commands reach an agent. Counting inside it would count all of those.
   assert.match(composer, /enqueueMessage\(agent\.id, body\);\n(?:\s*\/\/.*\n)*\s*void window\.cth\.trackMessageSent\('composer'\);/);
-  const store = read('src/renderer/src/store/store.ts');
+  // The store is store.ts plus its slices; enqueueMessage lives in slices/queue.ts.
+  const store = ['store.ts', 'slices/agents.ts', 'slices/queue.ts', 'slices/ui.ts', 'slices/integrations.ts']
+    .map((f) => read(`src/renderer/src/store/${f}`)).join('\n');
+  assert.ok(store.includes('enqueueMessage:'), 'the scan must cover the enqueue action');
   assert.ok(!store.includes('trackMessageSent'), 'the store action must not count');
 });
 
