@@ -38,7 +38,8 @@ export const DEFAULT_TRIGGER_MODE: TriggerMode = 'strict';
 /**
  * What an inbound message is asking for. A *directive* wants the hive to do work;
  * *communication* is informational (a status question, an FYI, a reply).
- * Senders may declare it; `classifyInboundKind` guesses when they don't.
+ * Senders may declare it, but `classifyInboundKind` decides: a declaration can only
+ * make a message stricter.
  */
 export type InboundKind = 'directive' | 'communication';
 
@@ -50,14 +51,16 @@ export function isAutoAllowed(mode: TriggerMode, kind: InboundKind): boolean {
 }
 
 /**
- * Best-effort guess at intent when the payload doesn't declare `kind`.
+ * Best-effort guess at a message's intent.
  *
  * Deliberately conservative: anything we aren't confident is chatter is treated as
  * a directive, because mis-labelling a directive as communication is what lets
- * unapproved work through in `communication-only` mode. Callers who care should
- * send an explicit `kind`.
+ * unapproved work through in `communication-only` mode. For the same reason a
+ * caller's `declared` kind is trusted only when it is 'directive': anyone holding
+ * the endpoint secret could otherwise label "delete the repo" as communication.
  */
-export function classifyInboundKind(text: string): InboundKind {
+export function classifyInboundKind(text: string, declared?: InboundKind): InboundKind {
+  if (declared === 'directive') return 'directive';
   const t = text.trim().toLowerCase();
   if (!t) return 'communication';
   // A leading question with no imperative reads as someone asking, not tasking.

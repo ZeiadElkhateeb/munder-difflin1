@@ -92,7 +92,8 @@ server and one tunnel; the id in the path says which one you are calling.
 Trigger work (POST <tunnel>/<webhookId>):
   header  x-md-webhook-secret: <that webhook's secret>
   body    {"message": "do X for me", "title": "optional short title",
-           "kind": "directive" | "communication", "from": "who is calling"}
+           "kind": "directive" (optional; it can only make a message stricter),
+           "from": "who is calling"}
   -> 200  {"ok": true, "token": "<capability token>", "taskId": "<card id>"}
   -> 202  {"ok": true, "status": "awaiting approval"}
 
@@ -103,7 +104,7 @@ Check status (GET <tunnel>/<webhookId>):
 
 The mode decides which of the two answers you get:
   allow all           routes straight through -> 200
-  communication only  chatter routes; a directive gets 202 awaiting approval
+  communication only  plain questions route; anything else gets 202 awaiting approval
   strict              everything gets 202 awaiting approval
 
 A 202 means the message is parked in Trigger History until you approve it; the
